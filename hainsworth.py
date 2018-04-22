@@ -38,7 +38,7 @@ HAINSWORTH_SUBBEAT_STRUCTURES = [
 def load_hainsworth_annotations(filename):
     if not os.path.exists(filename):
         raise ValueError('{} does not exist'.format(filename))
-    
+
     datarec = loadmat(filename)['datarec']
     filename = datarec[0][0][0]
     artist = datarec[1][0][0]
@@ -51,7 +51,7 @@ def load_hainsworth_annotations(filename):
     tempo = float(datarec[8][0][0][0])
     num_beats = int(datarec[9][0][0][0])
     beats = datarec[10][0].flatten()
-    
+
     assert len(beats) == num_beats
 
     #y = beats[0].flatten()
@@ -83,17 +83,17 @@ def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
         filename2 = "{:03d}_info.mat".format(i)
 
         f1 = os.path.join(data_dir, filename1)
-        f1 = os.path.join(label_dir, filename2)
+        f2 = os.path.join(label_dir, filename2)
         if os.path.exists(f1) and os.path.exists(f2):
             # Load audio at original sample rate
             x, sr = librosa.load(f1, sr=None)
             r = load_hainsworth_annotations(f2)
             resample_hainsworth_beats(r, sr, target_sr)
-            
+
             # Resample audio to target sample rate
             if target_sr != sr:
                 x = resampy.resample(x, sr, target_sr)
-            
+
             data_array.append(x)
             label_array.append(r) # has tempos too
 
