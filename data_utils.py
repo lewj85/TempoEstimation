@@ -5,7 +5,10 @@ def create_data_subsets(X, y, valid_ratio=0.2, test_ratio=0.2):
     Split data into train, validation, and test subsets
     """
     # Divide data
-    n_examples = X.shape[0]
+    if type(X) == list:
+        n_examples = X[0].shape[0]
+    else:
+        n_examples = X.shape[0]
     # Get random order
     idx = np.random.permutation(n_examples)
 

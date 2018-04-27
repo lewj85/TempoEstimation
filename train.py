@@ -10,10 +10,14 @@ from data_utils import create_data_subsets
 from beat_tracking import binary_targets_to_beat_times, \
     estimate_beats_from_activation
 from tempo import get_tempos_from_annotations, estimate_tempo
+from math import ceil
 
-HOP_SIZE = 512
+HOP_SIZE = 441
 TARGET_FS = 44100
-
+HAINSWORTH_MIN_TEMPO = 40
+HAINSWORTH_MAX_TEMPO = 250
+HAINSWORTH_MIN_LAG = int(60 * TARGET_FS / (HOP_SIZE * HAINSWORTH_MAX_TEMPO))
+HAINSWORTH_MAX_LAG = ceil(60 * TARGET_FS / (HOP_SIZE * HAINSWORTH_MIN_TEMPO))
 
 def parse_arguments():
     """
@@ -46,6 +50,9 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     elif dataset == 'ballroom':
         a, r = prep_ballroom_data(data_dir, label_dir, HOP_SIZE, TARGET_FS)
 
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     # Get features and targets from data
     X, y = preprocess_data(a, r, mode=model_type)
 
@@ -63,7 +70,7 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
 
     # Using test data, estimate beats and evaluate
     beat_times_test = binary_targets_to_beat_times(test_data['y'], frame_rate)
-    beat_times_pred = estimate_beats_from_activation(y_test_pred, frame_rate)
+    beat_times_pred = estimate_beats_for_batch(y_test_pred, frame_rate, HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
     beat_metrics = compute_beat_metrics(beat_times_test, beat_times_pred)
     beat_metrics_path = os.path.join(output_dir, 'beat_metrics.pkl')
     with open(beat_metrics_path, 'wb') as f:
@@ -71,7 +78,8 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
 
     # Using test data, estimate tempo and evaluate
     tempos_test = get_tempos_from_annotations(r, test_data['indices'])
-    tempos_pred = estimate_tempo(beat_act, frame_rate, bpm_min=40, bpm_max=250,
+    tempos_pred = estimate_tempos_for_batch(beat_act, frame_rate, 
+                                 HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)
     tempo_metrics = compute_tempo_metrics(tempos_test, tempos_pred)
