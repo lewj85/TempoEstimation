@@ -22,6 +22,6 @@ def train_model(train_data, valid_data, model_type, lr=0.0001,
 
     # Training
     model.fit(x=X_train, y=y_train, validation_data=(X_valid, y_valid),
-              epochs=num_epochs, batch_size=batch_size)
+              epochs=num_epochs, batch_size=batch_size, verbose=2)
 
     return model

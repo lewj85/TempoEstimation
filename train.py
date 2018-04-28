@@ -11,9 +11,15 @@ from beat_tracking import binary_targets_to_beat_times, \
     estimate_beats_from_activation
 from tempo import get_tempos_from_annotations, estimate_tempo
 from math import ceil
+from log import init_console_logger
+import logging
+
+LOGGER = logging.getLogger('tempo_estimation')
+LOGGER.setLevel(logging.DEBUG)
 
 HOP_SIZE = 441
 TARGET_FS = 44100
+
 HAINSWORTH_MIN_TEMPO = 40
 HAINSWORTH_MAX_TEMPO = 250
 HAINSWORTH_MIN_LAG = int(60 * TARGET_FS / (HOP_SIZE * HAINSWORTH_MAX_TEMPO))
@@ -44,6 +50,10 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     """
     Train a deep beat tracker model
     """
+    # Set up logger
+    init_console_logger(LOGGER, verbose=True)
+
+    LOGGER.info('Loading {} data.'.format(dataset))
     # Load audio and annotations
     if dataset == 'hainsworth':
         a, r = prep_hainsworth_data(data_dir, label_dir, TARGET_FS)
@@ -53,39 +63,51 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    LOGGER.info('Preprocessing data for model type "{}".'.format(model_type))
     # Get features and targets from data
     X, y = preprocess_data(a, r, mode=model_type)
 
+    LOGGER.info('Creating data subsets.')
     train_data, valid_data, test_data = create_data_subsets(X, y)
 
+    LOGGER.info('Training model.')
     # Create, train, and save model
     model = train_model(train_data, valid_data, model_type,
                         lr=0.0001, batch_size=5, num_epochs=10)
+
+    LOGGER.info('Saving model.')
     model_path = os.path.join(output_dir, 'model.h5')
     model.save(model_path)
 
     frame_rate = TARGET_FS / HOP_SIZE
 
+    LOGGER.info('Running model on test data.')
     y_test_pred = model.predict(test_data['X'])
 
     # Using test data, estimate beats and evaluate
+    LOGGER.info('Estimating beats.')
     beat_times_test = binary_targets_to_beat_times(test_data['y'], frame_rate)
     beat_times_pred = estimate_beats_for_batch(y_test_pred, frame_rate, HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
+    LOGGER.info('Computing beat tracking metrics.')
     beat_metrics = compute_beat_metrics(beat_times_test, beat_times_pred)
     beat_metrics_path = os.path.join(output_dir, 'beat_metrics.pkl')
     with open(beat_metrics_path, 'wb') as f:
         pk.dump(beat_metrics, f)
 
     # Using test data, estimate tempo and evaluate
+    LOGGER.info('Estimating tempo.')
     tempos_test = get_tempos_from_annotations(r, test_data['indices'])
-    tempos_pred = estimate_tempos_for_batch(beat_act, frame_rate, 
+    tempos_pred = estimate_tempos_for_batch(beat_act, frame_rate,
                                  HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)
+    LOGGER.info('Computing tempo estimation metrics.')
     tempo_metrics = compute_tempo_metrics(tempos_test, tempos_pred)
     tempo_metrics_path = os.path.join(output_dir, 'tempo_metrics.pkl')
     with open(tempo_metrics_path, 'wb') as f:
         pk.dump(tempo_metrics, f)
+
+    LOGGER.info('Done!')
 
 
 if __name__ == '__main__':
