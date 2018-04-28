@@ -53,7 +53,7 @@ def load_hainsworth_annotations(filename):
     num_beats = int(datarec[9][0][0][0])
     beats = datarec[10][0].flatten()
 
-    assert len(beats) == num_beats
+    #assert len(beats) == num_beats
 
     #y = beats[0].flatten()
     annotations = {
@@ -78,7 +78,7 @@ def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
     data_array = []
     label_array = []
 
-    for i in range(2):
+    for i in range(245):
         # {} for replacement, : format spec, 03 pad up to 3 leading 0s, d is int
         filename1 = "{:03d}.wav".format(i)
         filename2 = "{:03d}_info.mat".format(i)
