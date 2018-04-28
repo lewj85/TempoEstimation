@@ -1,7 +1,7 @@
 from keras.layers import Conv1D, Dense, Flatten, Input
 
 
-def cnn(x, num_steps, win_size=1024, weight_decay=0.01):
+def cnn(num_steps, win_size=1024, weight_decay=0.01):
     """
     Create a convolutional audio feature extraction architecture
     """
@@ -17,6 +17,6 @@ def cnn(x, num_steps, win_size=1024, weight_decay=0.01):
     # remove channel dimension
     net = Flatten(data_format='channels_last')(net)
 
-    net = Dense(units=128, activation='linear')
+    net = Dense(units=128, activation='linear')(net)
 
     return net
