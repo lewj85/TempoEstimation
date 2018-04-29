@@ -71,6 +71,7 @@ def load_hainsworth_annotations(filename):
     return annotations
 
 def resample_hainsworth_beats(annotations, source_sr, target_sr):
+    annotations['beat_times'] = annotations['beats'] / source_sr
     annotations['beats'] = ((target_sr/source_sr) * annotations['beats']).astype(int)
 
 # wrapper for hainsworth data
@@ -97,5 +98,8 @@ def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
 
             data_array.append(x)
             label_array.append(r) # has tempos too
+
+        if len(data_array) == 10:
+            break
 
     return data_array, label_array

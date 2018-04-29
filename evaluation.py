@@ -13,7 +13,7 @@ def create_metric_dict(values):
     }
 
 
-def compute_beat_metrics(beat_times_ref, beat_times_est, frame_rate):
+def compute_beat_metrics(beat_times_ref, beat_times_est):
     """
     Compute standard MIREX beat tracking evaluation metrics
     """
@@ -26,7 +26,11 @@ def compute_beat_metrics(beat_times_ref, beat_times_est, frame_rate):
         f_measure.append(mir_eval.beat.f_measure(ref, est))
         cemgil.append(mir_eval.beat.cemgil(ref, est))
         goto.append(mir_eval.beat.goto(ref, est))
-        p_score.append(mir_eval.beat.p_score(ref_est))
+        try:
+            p_score.append(mir_eval.beat.p_score(ref, est))
+        except:
+            import pdb
+            pdb.set_trace()
 
     metrics = {
         'f_measure': create_metric_dict(f_measure),
@@ -56,7 +60,8 @@ def compute_tempo_metrics(tempos_ref, tempos_est, tol=0.05):
     multiple_detection = np.logical_or(base_detection,
                             np.logical_or(half_detection,
                                 np.logical_or(double_detection,
-                                    np.logical_or(third_detection, triple_detection))))
+                                    np.logical_or(third_detection,
+                                                  triple_detection))))
 
     # Compute diffferent accuracy measures
     acc1 = np.mean(base_detection)
