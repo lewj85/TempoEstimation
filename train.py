@@ -7,10 +7,11 @@ from model.architectures import construct_spectrogram_bilstm
 from model.training import train_model
 from evaluation import compute_beat_metrics, compute_tempo_metrics
 from data_utils import create_data_subsets
-from beat_tracking import binary_targets_to_beat_times, \
-    estimate_beats_from_activation
-from tempo import get_tempos_from_annotations, estimate_tempo
+from beat_tracking import estimate_beats_for_batch, \
+    get_beat_times_from_annotations
+from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
 from math import ceil
+from keras.models import load_model
 from log import init_console_logger
 import logging
 
@@ -70,23 +71,27 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     LOGGER.info('Creating data subsets.')
     train_data, valid_data, test_data = create_data_subsets(X, y)
 
-    LOGGER.info('Training model.')
-    # Create, train, and save model
-    model = train_model(train_data, valid_data, model_type,
-                        lr=0.0001, batch_size=5, num_epochs=10)
-
-    LOGGER.info('Saving model.')
     model_path = os.path.join(output_dir, 'model.h5')
-    model.save(model_path)
+    if not os.path.exists(model_path):
+        LOGGER.info('Training model.')
+        # Create, train, and save model
+        model = train_model(train_data, valid_data, model_type,
+                            lr=0.0001, batch_size=5, num_epochs=10)
+
+        LOGGER.info('Saving model.')
+        model.save(model_path)
+    else:
+        LOGGER.info('Loading model.')
+        model = load_model(model_path)
 
     frame_rate = TARGET_FS / HOP_SIZE
 
     LOGGER.info('Running model on test data.')
-    y_test_pred = model.predict(test_data['X'])
+    y_test_pred = model.predict(test_data['X'])[:,:,1]
 
     # Using test data, estimate beats and evaluate
     LOGGER.info('Estimating beats.')
-    beat_times_test = binary_targets_to_beat_times(test_data['y'], frame_rate)
+    beat_times_test = get_beat_times_from_annotations(r, test_data['indices'])
     beat_times_pred = estimate_beats_for_batch(y_test_pred, frame_rate, HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
     LOGGER.info('Computing beat tracking metrics.')
     beat_metrics = compute_beat_metrics(beat_times_test, beat_times_pred)
@@ -97,7 +102,7 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     # Using test data, estimate tempo and evaluate
     LOGGER.info('Estimating tempo.')
     tempos_test = get_tempos_from_annotations(r, test_data['indices'])
-    tempos_pred = estimate_tempos_for_batch(beat_act, frame_rate,
+    tempos_pred = estimate_tempos_for_batch(y_test_pred, frame_rate,
                                  HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)

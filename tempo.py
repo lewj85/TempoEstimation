@@ -8,7 +8,7 @@ def get_tempos_from_annotations(annotation_array, idxs):
     """
     tempos = []
     for idx in idxs:
-        tempos.append(annotation_array['tempo'])
+        tempos.append(annotation_array[idx]['tempo'])
 
     return tempos
 
@@ -23,9 +23,8 @@ def get_comb_filter_coeffs(alpha, lag):
     return b, a
 
 
-
-
-def estimate_tempo(beat_act, lag_min, lag_max, num_tempo_steps, alpha, smooth_win_len):
+def estimate_tempo(beat_act, frame_rate, lag_min, lag_max, num_tempo_steps,
+                   alpha, smooth_win_len):
 
     # Smooth beat activation
     win = np.hamming(int(np.ceil(smooth_win_len*frame_rate)))
@@ -55,8 +54,8 @@ def estimate_tempo(beat_act, lag_min, lag_max, num_tempo_steps, alpha, smooth_wi
     bpm_est = 60 * frame_rate / lag_est
 
     return bpm_est
-    
-    
+
+
 def estimate_tempos_for_batch(y_pred, frame_rate, lag_min, lag_max,
                    num_tempo_steps=100, alpha=0.79, smooth_win_len=.14):
     """
@@ -64,6 +63,7 @@ def estimate_tempos_for_batch(y_pred, frame_rate, lag_min, lag_max,
     """
     tempos = []
     for track in y_pred:
-        tempos.append(estimate_tempo(beat_act, lag_min, lag_max, num_tempo_steps, alpha, smooth_win_len))
+        tempos.append(estimate_tempo(track, frame_rate, lag_min, lag_max,
+                                     num_tempo_steps, alpha, smooth_win_len))
 
     return np.array(tempos)

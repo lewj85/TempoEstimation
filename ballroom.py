@@ -8,14 +8,16 @@ def load_ballroom_annotations(filename,sr):
 
     if not os.path.exists(filename):
         raise ValueError('{} does not exist'.format(filename))
-    
+
     assert len(beats) == num_beats
-    
+
     f = open(filename, 'r')
     beats = []
+    beat_times = []
     for line in f:
         t,b = line.split(" ")
         beats.append(int(t*sr))
+        beat_times.append(t)
 
     annotations = {
         'filename': filename,
@@ -24,7 +26,8 @@ def load_ballroom_annotations(filename,sr):
 #    'title': title,
 #    'style': style,
 #    'tempo': tempo,
-        'beats': beats
+        'beats': beats,
+        'beat_times': beat_times
     }
 
     return annotations
