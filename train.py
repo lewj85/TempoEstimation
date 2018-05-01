@@ -71,6 +71,8 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     elif dataset == 'ballroom':
         a, r = prep_ballroom_data(data_dir, label_dir, HOP_SIZE, TARGET_FS)
 
+    output_dir = os.path.join(output_dir, model_type, dataset)
+    LOGGER.info('Output will be saved to {}'.format(output_dir))
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -100,8 +102,7 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
         with open(test_data_path, 'rb') as f:
             test_data = pk.load(f)
 
-    model_path = os.path.join(output_dir, 'model_{}_{}.hdf5'.format(model_type,
-                                                                    dataset))
+    model_path = os.path.join(output_dir, 'model.hdf5')
     if not os.path.exists(model_path):
         # Only train model if we haven't done so already
         LOGGER.info('Training model.')
