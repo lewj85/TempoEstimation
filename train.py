@@ -100,13 +100,13 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
         with open(test_data_path, 'rb') as f:
             test_data = pk.load(f)
 
-    # TODO: Change model name based on dataset
-    model_path = os.path.join(output_dir, 'model.hdf5')
+    model_path = os.path.join(output_dir, 'model_{}_{}.hdf5'.format(model_type,
+                                                                    dataset))
     if not os.path.exists(model_path):
         # Only train model if we haven't done so already
         LOGGER.info('Training model.')
         # Create, train, and save model
-        model_path = train_model(train_data, valid_data, model_type, output_dir,
+        model_path = train_model(train_data, valid_data, model_type, model_path,
                                  lr=0.0001, batch_size=5, num_epochs=10)
 
     LOGGER.info('Loading model.')
