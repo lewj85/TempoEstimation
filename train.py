@@ -39,6 +39,7 @@ def parse_arguments():
     # -m is shortcut for --model
     parser.add_argument('--model', '-m', dest='model_type', default='spectrogram',
                         choices=['spectrogram', 'audio'], help='Model type')
+    # TODO: Add command line arguments for training hyperparameters
 
 
     # Creates a namespace object
@@ -71,15 +72,12 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     LOGGER.info('Creating data subsets.')
     train_data, valid_data, test_data = create_data_subsets(X, y)
 
-    model_path = os.path.join(output_dir, 'model.h5')
+    model_path = os.path.join(output_dir, 'model.hdf5')
     if not os.path.exists(model_path):
         LOGGER.info('Training model.')
         # Create, train, and save model
-        model = train_model(train_data, valid_data, model_type,
+        model = train_model(train_data, valid_data, model_type, output_dir,
                             lr=0.0001, batch_size=5, num_epochs=10)
-
-        LOGGER.info('Saving model.')
-        model.save(model_path)
     else:
         LOGGER.info('Loading model.')
         model = load_model(model_path)

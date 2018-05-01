@@ -26,11 +26,7 @@ def compute_beat_metrics(beat_times_ref, beat_times_est):
         f_measure.append(mir_eval.beat.f_measure(ref, est))
         cemgil.append(mir_eval.beat.cemgil(ref, est))
         goto.append(mir_eval.beat.goto(ref, est))
-        try:
-            p_score.append(mir_eval.beat.p_score(ref, est))
-        except:
-            import pdb
-            pdb.set_trace()
+        p_score.append(mir_eval.beat.p_score(ref, est))
 
     metrics = {
         'f_measure': create_metric_dict(f_measure),
