@@ -1,6 +1,6 @@
 import os
 from keras.optimizers import Adam
-from model.callbacks import CSVLogger, EarlyStopping
+from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
 from model.architectures import construct_spectrogram_bilstm
 import numpy as np
 
