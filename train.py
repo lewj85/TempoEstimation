@@ -4,7 +4,6 @@ import pickle as pk
 from argparse import ArgumentParser
 from hainsworth import prep_hainsworth_data
 from preprocess_data import preprocess_data
-from model.architectures import construct_spectrogram_bilstm
 from model.training import train_model
 from evaluation import compute_beat_metrics, compute_tempo_metrics
 from data_utils import create_data_subsets
@@ -56,6 +55,11 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
     # Set up logger
     init_console_logger(LOGGER, verbose=True)
 
+    output_dir = os.path.join(output_dir, model_type, dataset)
+    LOGGER.info('Output will be saved to {}'.format(output_dir))
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     LOGGER.info('Loading {} data.'.format(dataset))
     train_data_path = os.path.join(output_dir, '{}_train_data.pkl').format(dataset)
     valid_data_path = os.path.join(output_dir, '{}_valid_data.pkl').format(dataset)
@@ -70,11 +74,6 @@ def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
         a, r = prep_hainsworth_data(data_dir, label_dir, TARGET_FS)
     elif dataset == 'ballroom':
         a, r = prep_ballroom_data(data_dir, label_dir, HOP_SIZE, TARGET_FS)
-
-    output_dir = os.path.join(output_dir, model_type, dataset)
-    LOGGER.info('Output will be saved to {}'.format(output_dir))
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     if not data_exists:
         # Create preprocessed data if it doesn't exist

@@ -1,6 +1,18 @@
 from keras.models import Model
 from keras.layers import concatenate, Input
 from .bilstm import bilstm
+from .cnn import cnn
+
+
+def construct_audio_bilstm(num_steps, win_size=1024, weight_decay=0.01):
+    """
+    Construct an audio BiLSTM beat tracker model
+    """
+    c = cnn(num_steps, win_size=win_size, weight_decay=weight_decay)
+    # Pass spectrograms through BiLSTM
+    output = bilstm(c, num_steps, win_size)
+    model = Model(inputs=alist, outputs=output)
+    return model
 
 
 def construct_spectrogram_bilstm(nwin):

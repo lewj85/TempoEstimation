@@ -1,7 +1,7 @@
 import os
 from keras.optimizers import Adam
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint
-from model.architectures import construct_spectrogram_bilstm
+from model.architectures import construct_spectrogram_bilstm, construct_audio_bilstm
 import numpy as np
 
 
@@ -15,6 +15,8 @@ def train_model(train_data, valid_data, model_type, model_output_path, lr=0.001,
     # create BiLSTM and dense
     if model_type == 'spectrogram':
         model = construct_spectrogram_bilstm(X_train[0].shape[1])
+    elif model_type =='audio':
+        model = construct_audio_bilstm(X_train.shape[1])
     else:
         raise ValueError('Unsupported model type: {}'.format(model_type))
 
