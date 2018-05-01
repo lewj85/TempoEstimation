@@ -99,7 +99,4 @@ def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
             data_array.append(x)
             label_array.append(r) # has tempos too
 
-        if len(data_array) == 10:
-            break
-
     return data_array, label_array
