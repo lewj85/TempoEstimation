@@ -5,7 +5,7 @@ from model.architectures import construct_spectrogram_bilstm
 import numpy as np
 
 
-def train_model(train_data, valid_data, model_type, model_output_dir, lr=0.0001,
+def train_model(train_data, valid_data, model_type, model_output_dir, lr=0.001,
                 batch_size=5, num_epochs=10, patience=5):
 
     X_train = train_data['X']

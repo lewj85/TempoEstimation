@@ -9,7 +9,7 @@ def create_metric_dict(values):
         'median': np.median(values),
         'min': np.min(values),
         'max': np.max(values),
-        'values': values
+        'values': list(values)
     }
 
 
