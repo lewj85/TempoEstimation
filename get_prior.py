@@ -11,8 +11,8 @@ def get_hainsworth_prior(r, sr, k=1, show=False)
     tempos = []
     for i in range(len(r)):
         target_sr=44100
-        lag = 60*target_sr / (441 * r['tempo'])
-        tempos.append(r['tempo'])
+        lag = 60*target_sr / (441 * r[i]['tempo'])
+        tempos.append(r[i]['tempo'])
         lags.append(lag)
 
     # Create raw lag histogram
