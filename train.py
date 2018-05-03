@@ -36,6 +36,12 @@ def parse_arguments():
     parser.add_argument('dataset', choices=['hainsworth', 'ballroom'],
                         help='Name of dataset')
     parser.add_argument('output_dir', help='Path where output will be saved')
+    parser.add_argument('--num-epochs', type=int, default=10,
+                        help='Number of epochs for training model')
+    parser.add_argument('--batch-size', type=int, default=5,
+                        help='Batch size for training')
+    parser.add_argument('--lr', type=float, default=0.001,
+                        help='Learning rate')
     # -m is shortcut for --model
     parser.add_argument('--model', '-m', dest='model_type', default='spectrogram',
                         choices=['spectrogram', 'audio'], help='Model type')
@@ -48,7 +54,8 @@ def parse_arguments():
     return vars(args)
 
 
-def main(data_dir, label_dir, dataset, output_dir, model_type='spectrogram'):
+def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
+         lr=0.001, model_type='spectrogram'):
     """
     Train a deep beat tracker model
     """

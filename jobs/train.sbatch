@@ -12,10 +12,18 @@
 
 source ~/.bashrc
 cd /home/$USER/dev
-source activate l3embedding-cpu
+source activate tempo
 
 SRCDIR=$HOME/dev/TempoEstimation
 
 module purge
+module load cuda/8.0.44
+module load cudnn/8.0v6.0
 
-python $SRCDIR/train.py /beegfs/jtc440/aca/Beat_Tracking/hainsworth/samples /beegfs/jtc440/aca/Beat_Tracking/hainsworth/info hainsworth /scratch/jtc440/beat_tracker_output
+python $SRCDIR/train.py \
+    --num-epochs 200 \
+    --batch-size 10 \
+    --lr 0.001 \
+    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/samples \
+    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/info hainsworth \
+    /scratch/jtc440/beat_tracker_output
