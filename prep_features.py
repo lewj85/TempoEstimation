@@ -11,12 +11,15 @@ def prep_spectrogram_features(x, fs, hop_size=441):
     #x, fs = librosa.load(filename, sr=44100)
 
     # 3 melspectrograms
-    s1 = librosa.core.stft(x, n_fft=1024, hop_length=441, win_length=1024, window='hamming', center=True, pad_mode='constant')
-    ms1 = np.abs(librosa.feature.melspectrogram(sr=44100, S=s1))
-    s2 = librosa.core.stft(x, n_fft=2048, hop_length=441, win_length=2048, window='hamming', center=True, pad_mode='constant')
-    ms2 = np.abs(librosa.feature.melspectrogram(sr=44100, S=s2))
-    s3 = librosa.core.stft(x, n_fft=4096, hop_length=441, win_length=4096, window='hamming', center=True, pad_mode='constant')
-    ms3 = np.abs(librosa.feature.melspectrogram(sr=44100, S=s3))
+    s1 = librosa.core.stft(x, n_fft=1024, hop_length=hop_size, win_length=1024,
+                           window='hamming', center=True, pad_mode='constant')
+    ms1 = np.abs(librosa.feature.melspectrogram(sr=fs, S=s1))
+    s2 = librosa.core.stft(x, n_fft=2048, hop_length=hop_size, win_length=2048,
+                           window='hamming', center=True, pad_mode='constant')
+    ms2 = np.abs(librosa.feature.melspectrogram(sr=fs, S=s2))
+    s3 = librosa.core.stft(x, n_fft=4096, hop_length=hop_size, win_length=4096,
+                           window='hamming', center=True, pad_mode='constant')
+    ms3 = np.abs(librosa.feature.melspectrogram(sr=fs, S=s3))
 
     # 3 median spectrograms
     # pad edges

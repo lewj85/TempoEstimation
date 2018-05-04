@@ -19,7 +19,6 @@ LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
 
 HOP_SIZE =  0.01
-TARGET_FS = 44100
 
 HAINSWORTH_MIN_TEMPO = 40
 HAINSWORTH_MAX_TEMPO = 250
@@ -96,7 +95,8 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         # Create preprocessed data if it doesn't exist
         LOGGER.info('Preprocessing data for model type "{}".'.format(model_type))
         # Get features and targets from data
-        X, y = preprocess_data(a, r, mode=model_type, audio_window_size=audio_window_size)
+        X, y = preprocess_data(a, r, mode=model_type, hop_size=hop_length,
+                               audio_window_size=audio_window_size, sr=target_fs)
 
         LOGGER.info('Creating data subsets.')
         train_data, valid_data, test_data = create_data_subsets(X, y)

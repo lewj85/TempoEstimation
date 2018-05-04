@@ -11,7 +11,9 @@ def preprocess_data(audio_array, annotation_array, hop_size=441, mode='spectrogr
     """
     if mode == 'spectrogram':
         # Compute spectrogram features
-        X = [pad_sequences(feat) for feat in zip(*[prep_spectrogram_features(x, sr) for x in audio_array])]
+        X = [pad_sequences(feat)
+             for feat in zip(*[prep_spectrogram_features(x, sr=hop_size=hop_size)
+             for x in audio_array])]
         max_len = X[0].shape[1]
     elif mode == 'audio':
         # Compute audio features

@@ -2,16 +2,16 @@ from scipy.signal import gaussian, filtfilt #, lfilter
 import numpy as np
 import matplotlib.pyplot as plt
 
-def get_hainsworth_prior(r, sr, k=1, show=False)
+def get_hainsworth_prior(r, sr, target_sr=44100, hop_size=441, k=1, show=False)
     """
-    Gets prior histogram of tempos from the Hainsworth dataset. 
+    Gets prior histogram of tempos from the Hainsworth dataset.
     """
 
     lags = []
     tempos = []
+
     for i in range(len(r)):
-        target_sr=44100
-        lag = 60*target_sr / (441 * r[i]['tempo'])
+        lag = 60*target_sr / (hop_size * r[i]['tempo'])
         tempos.append(r[i]['tempo'])
         lags.append(lag)
 
@@ -25,7 +25,7 @@ def get_hainsworth_prior(r, sr, k=1, show=False)
         hainsworth_prior_histogram[i-min_lag] += 1
     #plt.bar(all_lags, hainsworth_prior_histogram)
 
-    def add_k_smoothing(histo, k=1):  
+    def add_k_smoothing(histo, k=1):
         newhisto = []
         for i in range(len(histo)):
             newhisto.append(histo[i] + k)
@@ -38,15 +38,15 @@ def get_hainsworth_prior(r, sr, k=1, show=False)
         ghisto /= ghisto.sum()
         #print(max(ghisto))
         #print(ghisto)
-        a = filtfilt(ghisto, [1], histo) 
+        a = filtfilt(ghisto, [1], histo)
         return a
 
     # Smooth the histogram
     h1 = add_k_smoothing(hainsworth_prior_histogram, k)
     h2 = gaussian_smoothing(hainsworth_prior_histogram)
     h3 = gaussian_smoothing(h1)
-    
-    # Normalize and plot    
+
+    # Normalize and plot
     h1 /= sum(h1)
     h2 /= sum(h2)
     h3 /= sum(h3)
@@ -54,5 +54,5 @@ def get_hainsworth_prior(r, sr, k=1, show=False)
         plt.bar(all_lags, h1, width=1)
         plt.bar(all_lags, h2, width=1)
         plt.bar(all_lags, h3, width=1)
-    
+
     return h1, h2, h3
