@@ -17,10 +17,8 @@ def preprocess_data(audio_array, annotation_array, hop_size=441, mode='spectrogr
         max_len = X[0].shape[1]
     elif mode == 'audio':
         # Compute audio features
-        # TODO: Chunk into frames
-        frames = [frame(x, frame_length=audio_window_size,
-                                 hop_length=hop_size).T for x in audio_array]
-        X = pad_sequences(frames)[...,np.newaxis]
+        X = pad_sequences([frame(x, frame_length=audio_window_size,
+            hop_length=hop_size).T for x in audio_array])[...,np.newaxis]
         max_len = X.shape[1]
 
     # Create targets for positive class
