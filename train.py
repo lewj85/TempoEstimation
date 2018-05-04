@@ -118,7 +118,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         LOGGER.info('Training model.')
         # Create, train, and save model
         model_path = train_model(train_data, valid_data, model_type, model_path,
-                                 lr=0.0001, batch_size=5, num_epochs=10,
+                                 lr=lr, batch_size=batch_size, num_epochs=num_epochs,
                                  audio_window_size=audio_window_size)
 
     LOGGER.info('Loading model.')
