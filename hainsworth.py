@@ -75,7 +75,7 @@ def resample_hainsworth_beats(annotations, source_sr, target_sr):
     annotations['beats'] = ((target_sr/source_sr) * annotations['beats']).astype(int)
 
 # wrapper for hainsworth data
-def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
+def prep_hainsworth_data(data_dir, label_dir, target_sr=44100, load_audio=True):
     data_array = []
     label_array = []
 
@@ -93,10 +93,11 @@ def prep_hainsworth_data(data_dir, label_dir, target_sr=44100):
             resample_hainsworth_beats(r, sr, target_sr)
 
             # Resample audio to target sample rate
-            if target_sr != sr:
-                x = resampy.resample(x, sr, target_sr)
+            if load_audio:
+                if target_sr != sr:
+                    x = resampy.resample(x, sr, target_sr)
+                data_array.append(x)
 
-            data_array.append(x)
             label_array.append(r) # has tempos too
 
     return data_array, label_array

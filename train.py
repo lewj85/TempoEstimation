@@ -18,13 +18,11 @@ import logging
 LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
 
-HOP_SIZE = 441
+HOP_SIZE =  0.01
 TARGET_FS = 44100
 
 HAINSWORTH_MIN_TEMPO = 40
 HAINSWORTH_MAX_TEMPO = 250
-HAINSWORTH_MIN_LAG = int(60 * TARGET_FS / (HOP_SIZE * HAINSWORTH_MAX_TEMPO))
-HAINSWORTH_MAX_LAG = ceil(60 * TARGET_FS / (HOP_SIZE * HAINSWORTH_MIN_TEMPO))
 
 def parse_arguments():
     """
@@ -40,6 +38,10 @@ def parse_arguments():
                         help='Number of epochs for training model')
     parser.add_argument('--batch-size', type=int, default=5,
                         help='Batch size for training')
+    parser.add_argument('--target-fs', type=int, default=44100,
+                        help='Target sample rate. If spectrogram samples is used, must be 44100')
+    parser.add_argument('--audio-window-size', type=int, default=2048,
+                        help='Audio window size')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate')
     # -m is shortcut for --model
@@ -54,8 +56,9 @@ def parse_arguments():
     return vars(args)
 
 
+# CHANGE SAMPLE RATE TO 24kHz or 16kHz
 def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
-         lr=0.001, model_type='spectrogram'):
+         lr=0.001, target_fs=44100, audio_window_size=2048, model_type='spectrogram'):
     """
     Train a deep beat tracker model
     """
@@ -68,45 +71,46 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         os.makedirs(output_dir)
 
     LOGGER.info('Loading {} data.'.format(dataset))
-    train_data_path = os.path.join(output_dir, '{}_train_data.pkl').format(dataset)
-    valid_data_path = os.path.join(output_dir, '{}_valid_data.pkl').format(dataset)
-    test_data_path = os.path.join(output_dir, '{}_test_data.pkl').format(dataset)
+    train_data_path = os.path.join(output_dir, '{}_train_data.npz').format(dataset)
+    valid_data_path = os.path.join(output_dir, '{}_valid_data.npz').format(dataset)
+    test_data_path = os.path.join(output_dir, '{}_test_data.npz').format(dataset)
 
     data_exists = os.path.exists(train_data_path) \
-        and os.path.exists(train_data_path) \
-        and os.path.exists(train_data_path)
+        and os.path.exists(valid_data_path) \
+        and os.path.exists(test_data_path)
+
+    if model_type == 'spectrogram':
+        assert target_fs == 44100
+
+    hop_length = int(target_fs * HOP_SIZE)
 
     # Load audio and annotations
     if dataset == 'hainsworth':
-        a, r = prep_hainsworth_data(data_dir, label_dir, TARGET_FS)
+        a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
+                                    load_audio=not data_exists)
     elif dataset == 'ballroom':
-        a, r = prep_ballroom_data(data_dir, label_dir, HOP_SIZE, TARGET_FS)
+        a, r = prep_ballroom_data(data_dir, label_dir, hop_length, target_fs,
+                                  load_audio=not data_exists)
 
     if not data_exists:
         # Create preprocessed data if it doesn't exist
         LOGGER.info('Preprocessing data for model type "{}".'.format(model_type))
         # Get features and targets from data
-        X, y = preprocess_data(a, r, mode=model_type)
+        X, y = preprocess_data(a, r, mode=model_type, audio_window_size=audio_window_size)
 
         LOGGER.info('Creating data subsets.')
         train_data, valid_data, test_data = create_data_subsets(X, y)
 
         LOGGER.info('Saving data subsets to disk.')
-        with open(train_data_path, 'wb') as f:
-            pk.dump(train_data, f)
-        with open(valid_data_path, 'wb') as f:
-            pk.dump(valid_data, f)
-        with open(test_data_path, 'wb') as f:
-            pk.dump(test_data, f)
+        np.savez(train_data_path, **train_data)
+        np.savez(valid_data_path, **valid_data)
+        np.savez(test_data_path, **test_data)
 
     else:
         # Otherwise, just load existing data
-        with open(train_data_path, 'rb') as f:
-            train_data = pk.load(f)
-        with open(valid_data_path, 'rb') as f:
-            valid_data = pk.load(f)
-        with open(test_data_path, 'rb') as f:
-            test_data = pk.load(f)
+        train_data = np.load(train_data_path)
+        valid_data = np.load(valid_data_path)
+        test_data = np.load(test_data_path)
 
     model_path = os.path.join(output_dir, 'model.hdf5')
     if not os.path.exists(model_path):
@@ -114,12 +118,13 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         LOGGER.info('Training model.')
         # Create, train, and save model
         model_path = train_model(train_data, valid_data, model_type, model_path,
-                                 lr=0.0001, batch_size=5, num_epochs=10)
+                                 lr=0.0001, batch_size=5, num_epochs=10,
+                                 audio_window_size=audio_window_size)
 
     LOGGER.info('Loading model.')
     model = load_model(model_path)
 
-    frame_rate = TARGET_FS / HOP_SIZE
+    frame_rate = target_fs / hop_length
 
     LOGGER.info('Running model on data.')
     y_train_pred = model.predict(train_data['X'])[:,:,1]
@@ -136,6 +141,10 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     LOGGER.info('Saving model outputs.')
     np.savez(output_path, **outputs)
 
+
+    min_lag = int(60 * target_fs / (hop_length * HAINSWORTH_MAX_TEMPO))
+    max_lag = ceil(60 * target_fs / (hop_length * HAINSWORTH_MIN_TEMPO))
+
     # Using test data, estimate beats and evaluate
     LOGGER.info('Estimating beats.')
     beat_times_train = get_beat_times_from_annotations(r, train_data['indices'])
@@ -143,11 +152,11 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     beat_times_test = get_beat_times_from_annotations(r, test_data['indices'])
 
     beat_times_pred_train = estimate_beats_for_batch(y_train_pred, frame_rate,
-        HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
+        min_lag, max_lag)
     beat_times_pred_valid = estimate_beats_for_batch(y_valid_pred, frame_rate,
-        HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
+        min_lag, max_lag)
     beat_times_pred_test = estimate_beats_for_batch(y_test_pred, frame_rate,
-        HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG)
+        min_lag, max_lag)
 
     LOGGER.info('Computing beat tracking metrics.')
     beat_metrics_train = compute_beat_metrics(beat_times_train, beat_times_pred_train)
@@ -172,15 +181,15 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     tempos_test = get_tempos_from_annotations(r, test_data['indices'])
 
     tempos_pred_train = estimate_tempos_for_batch(y_train_pred, frame_rate,
-                                 HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
+                                 min_lag, max_lag,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)
     tempos_pred_valid = estimate_tempos_for_batch(y_valid_pred, frame_rate,
-                                 HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
+                                 min_lag, max_lag,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)
     tempos_pred_test = estimate_tempos_for_batch(y_test_pred, frame_rate,
-                                 HAINSWORTH_MIN_LAG, HAINSWORTH_MAX_LAG,
+                                 min_lag, max_lag,
                                  num_tempo_steps=100, alpha=0.79,
                                  smooth_win_len=.14)
 

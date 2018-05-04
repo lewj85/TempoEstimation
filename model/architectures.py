@@ -4,14 +4,14 @@ from .bilstm import bilstm
 from .cnn import cnn
 
 
-def construct_audio_bilstm(num_steps, win_size=1024, weight_decay=0.01):
+def construct_audio_bilstm(num_steps, win_size=2048, weight_decay=0.01):
     """
     Construct an audio BiLSTM beat tracker model
     """
-    c = cnn(num_steps, win_size=win_size, weight_decay=weight_decay)
+    inp, c = cnn(num_steps, win_size=win_size, weight_decay=weight_decay)
     # Pass spectrograms through BiLSTM
     output = bilstm(c, num_steps, win_size)
-    model = Model(inputs=alist, outputs=output)
+    model = Model(inputs=inp, outputs=output)
     return model
 
 

@@ -6,7 +6,7 @@ import numpy as np
 
 
 def train_model(train_data, valid_data, model_type, model_output_path, lr=0.001,
-                batch_size=5, num_epochs=10, patience=5):
+                batch_size=5, num_epochs=10, patience=5, audio_window_size=2048):
 
     X_train = train_data['X']
     y_train = train_data['y']
@@ -16,7 +16,7 @@ def train_model(train_data, valid_data, model_type, model_output_path, lr=0.001,
     if model_type == 'spectrogram':
         model = construct_spectrogram_bilstm(X_train[0].shape[1])
     elif model_type =='audio':
-        model = construct_audio_bilstm(X_train.shape[1])
+        model = construct_audio_bilstm(X_train.shape[1], audio_window_size)
     else:
         raise ValueError('Unsupported model type: {}'.format(model_type))
 
