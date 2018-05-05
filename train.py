@@ -90,7 +90,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         'audio_window_size': audio_window_size,
         'model_type': model_type
     }
-    config_path = os.path.join(output_dir, 'config.json')
+    config_path = os.path.join(model_dir, 'config.json')
     with open(config_path, 'w') as f:
         json.dump(config, f)
 
