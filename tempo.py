@@ -49,7 +49,7 @@ def estimate_tempo(beat_act, frame_rate, lag_min, lag_max, num_tempo_steps,
     hist_win = np.hamming(7)
     hist_smooth = signal.lfilter(hist_win, [1], hist)
 
-    if tempo_prior:
+    if tempo_prior is not None:
         hist_smooth *= tempo_prior
 
     # Get the peak lag and get the corresponding tempo in beats per minute

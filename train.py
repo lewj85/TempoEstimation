@@ -11,7 +11,6 @@ from evaluation import perform_evaluation
 from data_utils import create_data_subsets, load_data
 from math import ceil
 from log import init_console_logger
-from get_prior import get_tempo_prior
 import logging
 
 LOGGER = logging.getLogger('tempo_estimation')

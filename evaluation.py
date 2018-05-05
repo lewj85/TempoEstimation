@@ -8,6 +8,7 @@ from keras.models import load_model
 from beat_tracking import estimate_beats_for_batch, \
     get_beat_times_from_annotations
 from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
+from get_prior import get_tempo_prior
 
 LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
@@ -131,27 +132,33 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
     min_lag = int(60 * target_fs / (hop_length * HAINSWORTH_MAX_TEMPO))
     max_lag = ceil(60 * target_fs / (hop_length * HAINSWORTH_MIN_TEMPO))
 
-    LOGGER.info('Loading model.')
-    model_path = os.path.join(model_dir, 'model.hdf5')
-    model = load_model(model_path)
-
     frame_rate = target_fs / hop_length
 
-    LOGGER.info('Running model on data.')
-    y_train_pred = model.predict(train_data['X'], batch_size=batch_size)[:,:,1]
-    y_valid_pred = model.predict(valid_data['X'], batch_size=batch_size)[:,:,1]
-    y_test_pred = model.predict(test_data['X'], batch_size=batch_size)[:,:,1]
-
-    # Save model outputs
-    outputs = {
-        'train': y_train_pred,
-        'valid': y_valid_pred,
-        'test': y_test_pred,
-    }
     output_path = os.path.join(model_dir, 'output.npz')
-    LOGGER.info('Saving model outputs.')
-    np.savez(output_path, **outputs)
+    if not os.path.exists(output_path):
+        LOGGER.info('Loading model.')
+        model_path = os.path.join(model_dir, 'model.hdf5')
+        model = load_model(model_path)
 
+        LOGGER.info('Running model on data.')
+        y_train_pred = model.predict(train_data['X'], batch_size=batch_size)[:,:,1]
+        y_valid_pred = model.predict(valid_data['X'], batch_size=batch_size)[:,:,1]
+        y_test_pred = model.predict(test_data['X'], batch_size=batch_size)[:,:,1]
+
+        # Save model outputs
+        outputs = {
+            'train': y_train_pred,
+            'valid': y_valid_pred,
+            'test': y_test_pred,
+        }
+        LOGGER.info('Saving model outputs.')
+        np.savez(output_path, **outputs)
+    else:
+        data = np.load(output_path)
+        y_train_pred = data['train']
+        y_valid_pred = data['valid']
+        y_test_pred = data['test']
+        del data
 
     # Using test data, estimate beats and evaluate
     LOGGER.info('Getting annotation beats.')
@@ -205,7 +212,7 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
             desc = 'tempo_prior_k={}_{}gaussian'
             desc = desc.format(conf['k'],
                                "" if conf['apply_gaussian'] else "no")
-            tempo_prior = get_tempo_prior(r, target_sr=target_sr,
+            tempo_prior = get_tempo_prior(r, target_sr=target_fs,
                 hop_size=hop_length, min_lag=min_lag, max_lag=max_lag,
                 **conf)
         else:
