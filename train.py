@@ -2,14 +2,13 @@ import datetime
 import json
 import os
 import numpy as np
-import pickle as pk
 from argparse import ArgumentParser
 from ballroom import prep_ballroom_data
 from hainsworth import prep_hainsworth_data
 from preprocess_data import preprocess_data
 from model.training import train_model
 from evaluation import perform_evaluation
-from data_utils import create_data_subsets
+from data_utils import create_data_subsets, load_data
 from math import ceil
 from log import init_console_logger
 from get_prior import get_tempo_prior
@@ -133,9 +132,9 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
 
     else:
         # Otherwise, just load existing data
-        train_data = np.load(train_data_path)
-        valid_data = np.load(valid_data_path)
-        test_data = np.load(test_data_path)
+        train_data = load_data(train_data_path, model_type)
+        valid_data = load_data(valid_data_path, model_type)
+        test_data = load_data(test_data_path, model_type)
 
     model_path = os.path.join(model_dir, 'model.hdf5')
     if not os.path.exists(model_path):
@@ -149,7 +148,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     # Evaluate model
     LOGGER.info('Evaluating model.')
     perform_evaluation(train_data, valid_data, test_data, model_dir, r,
-                       target_fs, k_smoothing=k_smoothing)
+                       target_fs, batch_size, k_smoothing=k_smoothing)
 
     LOGGER.info('Done!')
 

@@ -1,12 +1,11 @@
 import json
 import os
 import numpy as np
-import pickle as pk
 from argparse import ArgumentParser
 from ballroom import prep_ballroom_data
+from data_utils import load_data
 from hainsworth import prep_hainsworth_data
 from evaluation import perform_evaluation
-from math import ceil
 from keras.models import load_model
 from log import init_console_logger
 import logging
@@ -68,14 +67,15 @@ def main(model_dir):
     valid_data_path = os.path.join(feature_data_dir, '{}_valid_data.npz').format(dataset)
     test_data_path = os.path.join(feature_data_dir, '{}_test_data.npz').format(dataset)
 
-    train_data = np.load(train_data_path)
-    valid_data = np.load(valid_data_path)
-    test_data = np.load(test_data_path)
+    # Otherwise, just load existing data
+    train_data = load_data(train_data_path, model_type)
+    valid_data = load_data(valid_data_path, model_type)
+    test_data = load_data(test_data_path, model_type)
 
     # Evaluate model
     LOGGER.info('Evaluating model.')
     perform_evaluation(train_data, valid_data, test_data, model_dir, r,
-                       target_fs, k_smoothing=k_smoothing)
+                       target_fs, batch_size, k_smoothing=k_smoothing)
 
     LOGGER.info('Done!')
 

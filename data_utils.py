@@ -47,3 +47,12 @@ def create_data_subsets(X, y, valid_ratio=0.2, test_ratio=0.2):
         test_data['X'] = test_data['X'][0]
 
     return train_data, valid_data, test_data
+
+
+def load_data(data_path, model_type):
+    data = dict(np.load(data_path))
+
+    if model_type == 'spectrogram':
+        data['X'] = [x for x in data['X']]
+
+    return data

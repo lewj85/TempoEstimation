@@ -1,6 +1,10 @@
+import os
+import pickle as pk
 import logging
 import numpy as np
+from math import ceil
 import mir_eval.beat
+from keras.models import load_model
 from beat_tracking import estimate_beats_for_batch, \
     get_beat_times_from_annotations
 from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
@@ -8,10 +12,10 @@ from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
 LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
 
-
 HOP_SIZE = 0.01
 HAINSWORTH_MIN_TEMPO = 40
 HAINSWORTH_MAX_TEMPO = 250
+
 
 def create_metric_dict(values):
     return {
@@ -119,18 +123,13 @@ def perform_tempo_evaluations(tempos_train, tempos_valid, tempos_test,
 
 
 def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
-                       target_fs, k_smoothing=1):
+                       target_fs, batch_size, k_smoothing=1):
     """
     Evaluate the beat tracking model on beat tracking and tempo estimation
     """
     hop_length = int(target_fs * HOP_SIZE)
     min_lag = int(60 * target_fs / (hop_length * HAINSWORTH_MAX_TEMPO))
     max_lag = ceil(60 * target_fs / (hop_length * HAINSWORTH_MIN_TEMPO))
-
-    # Otherwise, just load existing data
-    train_data = np.load(train_data_path)
-    valid_data = np.load(valid_data_path)
-    test_data = np.load(test_data_path)
 
     LOGGER.info('Loading model.')
     model_path = os.path.join(model_dir, 'model.hdf5')
@@ -221,4 +220,3 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
     tempo_metrics_path = os.path.join(model_dir, 'tempo_metrics.pkl')
     with open(tempo_metrics_path, 'wb') as f:
         pk.dump(tempo_metrics, f)
-
