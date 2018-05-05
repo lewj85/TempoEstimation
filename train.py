@@ -1,3 +1,5 @@
+import datetime
+import json
 import os
 import numpy as np
 import pickle as pk
@@ -66,13 +68,36 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
 
     output_dir = os.path.join(output_dir, model_type, dataset)
     LOGGER.info('Output will be saved to {}'.format(output_dir))
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
+
+    data_dir = os.path.join(output_dir, 'data')
+    model_dir = os.path.join(output_dir, 'model',
+                             datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
+    if not os.path.exists(data_dir):
+        os.makedirs(data_dir)
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+
+    LOGGER.info('Saving configuration.')
+    config = {
+        'data_dir': data_dir,
+        'label_dir': label_dir,
+        'dataset': dataset,
+        'output_dir': output_dir,
+        'num_epochs': num_epochs,
+        'batch_size': batch_size,
+        'lr': lr,
+        'target_fs': target_fs,
+        'audio_window_size': audio_window_size,
+        'model_type': model_type
+    }
+    config_path = os.path.join(output_dir, 'config.json')
+    with open(config_path, 'w') as f:
+        json.dump(config, f)
 
     LOGGER.info('Loading {} data.'.format(dataset))
-    train_data_path = os.path.join(output_dir, '{}_train_data.npz').format(dataset)
-    valid_data_path = os.path.join(output_dir, '{}_valid_data.npz').format(dataset)
-    test_data_path = os.path.join(output_dir, '{}_test_data.npz').format(dataset)
+    train_data_path = os.path.join(data_dir, '{}_train_data.npz').format(dataset)
+    valid_data_path = os.path.join(data_dir, '{}_valid_data.npz').format(dataset)
+    test_data_path = os.path.join(data_dir, '{}_test_data.npz').format(dataset)
 
     data_exists = os.path.exists(train_data_path) \
         and os.path.exists(valid_data_path) \
@@ -112,7 +137,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         valid_data = np.load(valid_data_path)
         test_data = np.load(test_data_path)
 
-    model_path = os.path.join(output_dir, 'model.hdf5')
+    model_path = os.path.join(model_dir, 'model.hdf5')
     if not os.path.exists(model_path):
         # Only train model if we haven't done so already
         LOGGER.info('Training model.')
@@ -137,7 +162,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         'valid': y_valid_pred,
         'test': y_test_pred,
     }
-    output_path = os.path.join(output_dir, 'output.npz')
+    output_path = os.path.join(model_dir, 'output.npz')
     LOGGER.info('Saving model outputs.')
     np.savez(output_path, **outputs)
 
@@ -169,7 +194,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         'test': beat_metrics_test,
     }
 
-    beat_metrics_path = os.path.join(output_dir, 'beat_metrics.pkl')
+    beat_metrics_path = os.path.join(model_dir, 'beat_metrics.pkl')
     LOGGER.info('Saving beat tracking metrics.')
     with open(beat_metrics_path, 'wb') as f:
         pk.dump(beat_metrics, f)
@@ -205,7 +230,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     }
 
     LOGGER.info('Saving tempo estimation metrics.')
-    tempo_metrics_path = os.path.join(output_dir, 'tempo_metrics.pkl')
+    tempo_metrics_path = os.path.join(model_dir, 'tempo_metrics.pkl')
     with open(tempo_metrics_path, 'wb') as f:
         pk.dump(tempo_metrics, f)
 
