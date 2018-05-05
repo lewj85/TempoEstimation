@@ -20,4 +20,4 @@ module purge
 module load cuda/8.0.44
 module load cudnn/8.0v6.0
 
-python $SRCDIR/eval.py /scratch/jtc440/beat_tracker_output/spectrogram/hainsworth/model/20180504235042
+python $SRCDIR/evaluate.py /scratch/jtc440/beat_tracker_output/spectrogram/hainsworth/model/20180504235042
