@@ -8,23 +8,17 @@ from ballroom import prep_ballroom_data
 from hainsworth import prep_hainsworth_data
 from preprocess_data import preprocess_data
 from model.training import train_model
-from evaluation import compute_beat_metrics, compute_tempo_metrics
+from evaluation import perform_evaluation
 from data_utils import create_data_subsets
-from beat_tracking import estimate_beats_for_batch, \
-    get_beat_times_from_annotations
-from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
 from math import ceil
-from keras.models import load_model
 from log import init_console_logger
+from get_prior import get_tempo_prior
 import logging
 
 LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
 
 HOP_SIZE =  0.01
-
-HAINSWORTH_MIN_TEMPO = 40
-HAINSWORTH_MAX_TEMPO = 250
 
 def parse_arguments():
     """
@@ -44,6 +38,8 @@ def parse_arguments():
                         help='Target sample rate. If spectrogram samples is used, must be 44100')
     parser.add_argument('--audio-window-size', type=int, default=2048,
                         help='Audio window size')
+    parser.add_argument('--k-smoothing', type=int, default=1,
+                        help='k for k-smothing')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate')
     # -m is shortcut for --model
@@ -60,7 +56,8 @@ def parse_arguments():
 
 # CHANGE SAMPLE RATE TO 24kHz or 16kHz
 def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
-         lr=0.001, target_fs=44100, audio_window_size=2048, model_type='spectrogram'):
+         lr=0.001, target_fs=44100, audio_window_size=2048,
+         model_type='spectrogram', k_smoothing=1):
     """
     Train a deep beat tracker model
     """
@@ -99,6 +96,8 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     train_data_path = os.path.join(feature_data_dir, '{}_train_data.npz').format(dataset)
     valid_data_path = os.path.join(feature_data_dir, '{}_valid_data.npz').format(dataset)
     test_data_path = os.path.join(feature_data_dir, '{}_test_data.npz').format(dataset)
+
+
 
     data_exists = os.path.exists(train_data_path) \
         and os.path.exists(valid_data_path) \
@@ -147,93 +146,10 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
                                  lr=lr, batch_size=batch_size, num_epochs=num_epochs,
                                  audio_window_size=audio_window_size)
 
-    LOGGER.info('Loading model.')
-    model = load_model(model_path)
-
-    frame_rate = target_fs / hop_length
-
-    LOGGER.info('Running model on data.')
-    y_train_pred = model.predict(train_data['X'], batch_size=batch_size)[:,:,1]
-    y_valid_pred = model.predict(valid_data['X'], batch_size=batch_size)[:,:,1]
-    y_test_pred = model.predict(test_data['X'], batch_size=batch_size)[:,:,1]
-
-    # Save model outputs
-    outputs = {
-        'train': y_train_pred,
-        'valid': y_valid_pred,
-        'test': y_test_pred,
-    }
-    output_path = os.path.join(model_dir, 'output.npz')
-    LOGGER.info('Saving model outputs.')
-    np.savez(output_path, **outputs)
-
-
-    min_lag = int(60 * target_fs / (hop_length * HAINSWORTH_MAX_TEMPO))
-    max_lag = ceil(60 * target_fs / (hop_length * HAINSWORTH_MIN_TEMPO))
-
-    # Using test data, estimate beats and evaluate
-    LOGGER.info('Estimating beats.')
-    beat_times_train = get_beat_times_from_annotations(r, train_data['indices'])
-    beat_times_valid = get_beat_times_from_annotations(r, valid_data['indices'])
-    beat_times_test = get_beat_times_from_annotations(r, test_data['indices'])
-
-    beat_times_pred_train = estimate_beats_for_batch(y_train_pred, frame_rate,
-        min_lag, max_lag)
-    beat_times_pred_valid = estimate_beats_for_batch(y_valid_pred, frame_rate,
-        min_lag, max_lag)
-    beat_times_pred_test = estimate_beats_for_batch(y_test_pred, frame_rate,
-        min_lag, max_lag)
-
-    LOGGER.info('Computing beat tracking metrics.')
-    beat_metrics_train = compute_beat_metrics(beat_times_train, beat_times_pred_train)
-    beat_metrics_valid = compute_beat_metrics(beat_times_valid, beat_times_pred_valid)
-    beat_metrics_test = compute_beat_metrics(beat_times_test, beat_times_pred_test)
-
-    beat_metrics = {
-        'train': beat_metrics_train,
-        'valid': beat_metrics_valid,
-        'test': beat_metrics_test,
-    }
-
-    beat_metrics_path = os.path.join(model_dir, 'beat_metrics.pkl')
-    LOGGER.info('Saving beat tracking metrics.')
-    with open(beat_metrics_path, 'wb') as f:
-        pk.dump(beat_metrics, f)
-
-    # Using test data, estimate tempo and evaluate
-    LOGGER.info('Estimating tempo.')
-    tempos_train = get_tempos_from_annotations(r, train_data['indices'])
-    tempos_valid = get_tempos_from_annotations(r, valid_data['indices'])
-    tempos_test = get_tempos_from_annotations(r, test_data['indices'])
-
-    tempos_pred_train = estimate_tempos_for_batch(y_train_pred, frame_rate,
-                                 min_lag, max_lag,
-                                 num_tempo_steps=100, alpha=0.79,
-                                 smooth_win_len=.14)
-    tempos_pred_valid = estimate_tempos_for_batch(y_valid_pred, frame_rate,
-                                 min_lag, max_lag,
-                                 num_tempo_steps=100, alpha=0.79,
-                                 smooth_win_len=.14)
-    tempos_pred_test = estimate_tempos_for_batch(y_test_pred, frame_rate,
-                                 min_lag, max_lag,
-                                 num_tempo_steps=100, alpha=0.79,
-                                 smooth_win_len=.14)
-
-    LOGGER.info('Computing tempo estimation metrics.')
-    tempo_metrics_train = compute_tempo_metrics(tempos_train, tempos_pred_train)
-    tempo_metrics_valid = compute_tempo_metrics(tempos_valid, tempos_pred_valid)
-    tempo_metrics_test = compute_tempo_metrics(tempos_test, tempos_pred_test)
-
-    tempo_metrics = {
-        'train': tempo_metrics_train,
-        'valid': tempo_metrics_valid,
-        'test': tempo_metrics_test,
-    }
-
-    LOGGER.info('Saving tempo estimation metrics.')
-    tempo_metrics_path = os.path.join(model_dir, 'tempo_metrics.pkl')
-    with open(tempo_metrics_path, 'wb') as f:
-        pk.dump(tempo_metrics, f)
+    # Evaluate model
+    LOGGER.info('Evaluating model.')
+    perform_evaluation(train_data, valid_data, test_data, model_dir, r,
+                       target_fs, k_smoothing=k_smoothing)
 
     LOGGER.info('Done!')
 
