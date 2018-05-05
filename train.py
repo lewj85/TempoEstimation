@@ -32,6 +32,8 @@ def parse_arguments():
                         help='Number of epochs for training model')
     parser.add_argument('--batch-size', type=int, default=5,
                         help='Batch size for training')
+    parser.add_argument('--patience', type=int, default=5,
+                        help='Early stopping patience')
     parser.add_argument('--target-fs', type=int, default=44100,
                         help='Target sample rate. If spectrogram samples is used, must be 44100')
     parser.add_argument('--audio-window-size', type=int, default=2048,
@@ -54,7 +56,7 @@ def parse_arguments():
 
 # CHANGE SAMPLE RATE TO 24kHz or 16kHz
 def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
-         lr=0.001, target_fs=44100, audio_window_size=2048,
+         lr=0.001, target_fs=44100, audio_window_size=2048, patience=5,
          model_type='spectrogram', k_smoothing=1):
     """
     Train a deep beat tracker model
@@ -142,7 +144,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         # Create, train, and save model
         model_path = train_model(train_data, valid_data, model_type, model_path,
                                  lr=lr, batch_size=batch_size, num_epochs=num_epochs,
-                                 audio_window_size=audio_window_size)
+                                 audio_window_size=audio_window_size, patience=patience)
 
     # Evaluate model
     LOGGER.info('Evaluating model.')
