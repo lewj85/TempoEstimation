@@ -114,13 +114,19 @@ def perform_tempo_evaluations(tempos_train, tempos_valid, tempos_test,
     tempo_metrics_valid = compute_tempo_metrics(tempos_valid, tempos_pred_valid)
     tempo_metrics_test = compute_tempo_metrics(tempos_test, tempos_pred_test)
 
+    tempos = {
+        'train': tempos_pred_train,
+        'valid': tempos_pred_valid,
+        'test': tempos_pred_test
+    }
+
     tempo_metrics = {
         'train': tempo_metrics_train,
         'valid': tempo_metrics_valid,
         'test': tempo_metrics_test,
     }
 
-    return tempo_metrics
+    return tempos, tempo_metrics
 
 
 def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
@@ -175,6 +181,17 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
     beat_times_pred_test = estimate_beats_for_batch(y_test_pred, frame_rate,
         min_lag, max_lag)
 
+    beat_times = {
+        'train': beat_times_pred_train,
+        'valid': beat_times_pred_valid,
+        'test': beat_times_pred_test
+    }
+
+    beat_times_path = os.path.join(model_dir, 'beat_times.pkl')
+    LOGGER.info('Saving predicted beat times.')
+    with open(beat_times_path, 'wb') as f:
+        pk.dump(beat_times)
+
     LOGGER.info('Computing beat tracking metrics.')
     beat_metrics_train = compute_beat_metrics(beat_times_train, beat_times_pred_train)
     beat_metrics_valid = compute_beat_metrics(beat_times_valid, beat_times_pred_valid)
@@ -206,6 +223,7 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
     ]
 
     tempo_metrics = {}
+    predicted_tempos = {}
 
     for conf in tempo_configs:
         if conf:
@@ -219,9 +237,18 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
             desc = 'base'
             tempo_prior = None
 
-        tempo_metrics[desc] = perform_tempo_evaluations(
+
+        tempos, metrics = perform_tempo_evaluations(
             tempos_train, tempos_valid, tempos_test, y_train_pred, y_valid_pred,
             y_test_pred, frame_rate, min_lag, max_lag, tempo_prior)
+
+        tempo_metrics[desc] = metrics
+        predicted_tempos[desc] = tempos
+
+    LOGGER.info('Saving predicted tempo.')
+    tempos_path = os.path.join(model_dir, 'tempos.pkl')
+    with open(tempos_path, 'wb') as f:
+        pk.dump(predicted_tempos, f)
 
     LOGGER.info('Saving tempo estimation metrics.')
     tempo_metrics_path = os.path.join(model_dir, 'tempo_metrics.pkl')

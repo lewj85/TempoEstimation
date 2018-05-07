@@ -1,6 +1,7 @@
 from scipy.signal import gaussian, filtfilt #, lfilter
 import numpy as np
 import matplotlib.pyplot as plt
+from filter_utils import lfilter_center
 
 
 def get_tempo_prior(r, target_sr=44100, hop_size=441, k=1, min_lag=20, max_lag=120, show=False, apply_gaussian=True):
@@ -37,7 +38,7 @@ def get_tempo_prior(r, target_sr=44100, hop_size=441, k=1, min_lag=20, max_lag=1
         ghisto /= ghisto.sum()
         #print(max(ghisto))
         #print(ghisto)
-        a = filtfilt(ghisto, [1], histo)
+        a = lfilter_center(ghisto, histo)
         return a
 
     # Smooth the histogram

@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.signal as signal
+from filter_utils import lfilter_center
 
 
 def get_tempos_from_annotations(annotation_array, idxs):
@@ -47,7 +48,7 @@ def estimate_tempo(beat_act, frame_rate, lag_min, lag_max, num_tempo_steps,
 
     # Smooth histogram by convolving with a hamming window
     hist_win = np.hamming(7)
-    hist_smooth = signal.lfilter(hist_win, [1], hist)
+    hist_smooth = lfilter_center(hist_win, hist)
 
     if tempo_prior is not None:
         hist_smooth *= tempo_prior
