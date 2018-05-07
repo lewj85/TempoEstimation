@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from math import ceil
 import mir_eval.beat
-from keras.models import load_model
 from beat_tracking import estimate_beats_for_batch, \
     get_beat_times_from_annotations
 from tempo import get_tempos_from_annotations, estimate_tempos_for_batch
@@ -142,6 +141,7 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
 
     output_path = os.path.join(model_dir, 'output.npz')
     if not os.path.exists(output_path):
+        from keras.models import load_model
         LOGGER.info('Loading model.')
         model_path = os.path.join(model_dir, 'model.hdf5')
         model = load_model(model_path)
