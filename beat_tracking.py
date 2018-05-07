@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.signal import lfilter
 from math import ceil
+from filter_utils import lfilter_center
 
 
 def get_beat_times_from_annotations(annotation_array, idxs):
@@ -36,7 +37,7 @@ def estimate_beats_from_activation(beat_activation, frame_rate, lag_min, lag_max
     acr = acr[acr.size//2:]
 
     # Smoothing
-    acr_s = lfilter(np.hamming(int(0.15*frame_rate)), [1], acr)
+    acr_s = lfilter_center(np.hamming(int(0.15*frame_rate)), acr)
 
     # Limit candidate range
     acr_lim = acr_s[lag_min:lag_max+1]
@@ -75,9 +76,3 @@ def estimate_beats_for_batch(y_pred, frame_rate, lag_min, lag_max, deviation=0.1
         all_beats.append(estimate_beats_from_activation(track, frame_rate, lag_min, lag_max, deviation))
 
     return all_beats
-
-
-
-
-
-
