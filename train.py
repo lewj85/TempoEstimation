@@ -84,6 +84,8 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         'num_epochs': num_epochs,
         'batch_size': batch_size,
         'lr': lr,
+        'patience': patience,
+        'k_smoothing': k_smoothing,
         'target_fs': target_fs,
         'audio_window_size': audio_window_size,
         'model_type': model_type
