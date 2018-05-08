@@ -190,7 +190,7 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
     beat_times_path = os.path.join(model_dir, 'beat_times.pkl')
     LOGGER.info('Saving predicted beat times.')
     with open(beat_times_path, 'wb') as f:
-        pk.dump(beat_times)
+        pk.dump(beat_times, f)
 
     LOGGER.info('Computing beat tracking metrics.')
     beat_metrics_train = compute_beat_metrics(beat_times_train, beat_times_pred_train)

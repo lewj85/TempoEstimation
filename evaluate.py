@@ -6,14 +6,13 @@ from ballroom import prep_ballroom_data
 from data_utils import load_data
 from hainsworth import prep_hainsworth_data
 from evaluation import perform_evaluation
-from keras.models import load_model
 from log import init_console_logger
 import logging
 
 LOGGER = logging.getLogger('tempo_estimation')
 LOGGER.setLevel(logging.DEBUG)
 
-from train import HOP_SIZE
+HOP_SIZE =  0.01
 
 def parse_arguments():
     """
