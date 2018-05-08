@@ -2,7 +2,6 @@ from scipy.io import loadmat
 import os
 import librosa
 import resampy
-from keras.preprocessing import sequence
 
 def load_ballroom_annotations(filename,sr):
 
