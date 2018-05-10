@@ -1,0 +1,14 @@
+{
+    "train": {
+        "ballroom": {
+            "data_dir": "/beegfs/jtc440/aca/BallroomData",
+            "label_dir": "/beegfs/jtc440/aca/BallroomAnnotations"
+        }
+    },
+    "test": {
+        "hainsworth": {
+            "data_dir": "/beegfs/jtc440/aca/Beat_Tracking/hainsworth/samples",
+            "label_dir": "/beegfs/jtc440/aca/Beat_Tracking/hainsworth/info"
+        }
+    }
+}

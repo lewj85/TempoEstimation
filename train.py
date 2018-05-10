@@ -23,10 +23,7 @@ def parse_arguments():
     Get command line arguments
     """
     parser = ArgumentParser(description='Train a deep beat tracker model')
-    parser.add_argument('data_dir', help='Path to audio directory')
-    parser.add_argument('label_dir', help='Path to annotation directory')
-    parser.add_argument('dataset', choices=['hainsworth', 'ballroom'],
-                        help='Name of dataset')
+    parser.add_argument('data_config', help='Path to data config file')
     parser.add_argument('output_dir', help='Path where output will be saved')
     parser.add_argument('--num-epochs', type=int, default=10,
                         help='Number of epochs for training model')
@@ -55,7 +52,7 @@ def parse_arguments():
 
 
 # CHANGE SAMPLE RATE TO 24kHz or 16kHz
-def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
+def main(data_config, output_dir, num_epochs=10, batch_size=5,
          lr=0.001, target_fs=44100, audio_window_size=2048, patience=5,
          model_type='spectrogram', k_smoothing=1):
     """
@@ -64,7 +61,16 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     # Set up logger
     init_console_logger(LOGGER, verbose=True)
 
-    output_dir = os.path.join(output_dir, model_type, dataset)
+    with open(data_config, 'r') as f:
+        data_config = json.load(f)
+
+    sorted_train_datasets = sorted(data_config['train'].keys())
+    train_dataset_desc = "train_" + "_".join(sorted_train_datasets)
+    test_dataset_desc = "test_" + "_".join(sorted(data_config['test'].keys()))
+
+    dataset_desc = train_dataset_desc + "-" + test_dataset_desc
+
+    output_dir = os.path.join(output_dir, model_type, dataset_desc)
     LOGGER.info('Output will be saved to {}'.format(output_dir))
 
     feature_data_dir = os.path.join(output_dir, 'data')
@@ -75,11 +81,10 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
+
     LOGGER.info('Saving configuration.')
     config = {
-        'data_dir': data_dir,
-        'label_dir': label_dir,
-        'dataset': dataset,
+        'data_config': data_config,
         'output_dir': output_dir,
         'num_epochs': num_epochs,
         'batch_size': batch_size,
@@ -90,15 +95,15 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
         'audio_window_size': audio_window_size,
         'model_type': model_type
     }
+
     config_path = os.path.join(model_dir, 'config.json')
     with open(config_path, 'w') as f:
         json.dump(config, f)
 
-    LOGGER.info('Loading {} data.'.format(dataset))
-    train_data_path = os.path.join(feature_data_dir, '{}_train_data.npz').format(dataset)
-    valid_data_path = os.path.join(feature_data_dir, '{}_valid_data.npz').format(dataset)
-    test_data_path = os.path.join(feature_data_dir, '{}_test_data.npz').format(dataset)
-
+    LOGGER.info('Loading {} data.'.format(dataset_desc))
+    train_data_path = os.path.join(feature_data_dir, '{}_train_data.npz').format(dataset_desc)
+    valid_data_path = os.path.join(feature_data_dir, '{}_valid_data.npz').format(dataset_desc)
+    test_data_path = os.path.join(feature_data_dir, '{}_test_data.npz').format(dataset_desc)
 
 
     data_exists = os.path.exists(train_data_path) \
@@ -110,23 +115,55 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
 
     hop_length = int(target_fs * HOP_SIZE)
 
+    sorted_train_datasets = sorted(data_config['train'].keys())
+    a_train = []
+    r_train = []
     # Load audio and annotations
-    if dataset == 'hainsworth':
-        a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
-                                    load_audio=not data_exists)
-    elif dataset == 'ballroom':
-        a, r = prep_ballroom_data(data_dir, label_dir, hop_length, target_fs,
-                                  load_audio=not data_exists)
+    for dataset in sorted_train_datasets:
+        data_dir = data_config['train'][dataset]['data_dir']
+        label_dir = data_config['train'][dataset]['label_dir']
+        if dataset == 'hainsworth':
+            a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
+                                        load_audio=not data_exists)
+        elif dataset == 'ballroom':
+            a, r = prep_ballroom_data(data_dir, label_dir, target_fs,
+                                      load_audio=not data_exists)
+
+        a_train += a
+        r_train += r
+
+    a_test = []
+    r_test = []
+    for dataset, dataset_dirs in data_config['test'].items():
+        data_dir = dataset_dirs['data_dir']
+        label_dir = dataset_dirs['label_dir']
+        if dataset == 'hainsworth':
+            a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
+                                        load_audio=not data_exists)
+        elif dataset == 'ballroom':
+            a, r = prep_ballroom_data(data_dir, label_dir, target_fs,
+                                      load_audio=not data_exists)
+
+        a_test += a
+        r_test += r
 
     if not data_exists:
         # Create preprocessed data if it doesn't exist
         LOGGER.info('Preprocessing data for model type "{}".'.format(model_type))
         # Get features and targets from data
-        X, y = preprocess_data(a, r, mode=model_type, hop_size=hop_length,
-                               audio_window_size=audio_window_size, sr=target_fs)
+        X_train, y_train = preprocess_data(a_train, r_train, mode=model_type,
+            hop_size=hop_length, audio_window_size=audio_window_size, sr=target_fs)
+        X_test, y_test = preprocess_data(a_test, r_test, mode=model_type,
+            hop_size=hop_length, audio_window_size=audio_window_size, sr=target_fs)
+
+        test_data = {
+            'X': X_test,
+            'y': y_test,
+            'indices': np.arange(X_test.shape[0]) # Hack
+        }
 
         LOGGER.info('Creating data subsets.')
-        train_data, valid_data, test_data = create_data_subsets(X, y)
+        train_data, valid_data = create_data_subsets(X_train, y_train)
 
         LOGGER.info('Saving data subsets to disk.')
         np.savez(train_data_path, **train_data)
@@ -150,7 +187,7 @@ def main(data_dir, label_dir, dataset, output_dir, num_epochs=10, batch_size=5,
 
     # Evaluate model
     LOGGER.info('Evaluating model.')
-    perform_evaluation(train_data, valid_data, test_data, model_dir, r,
+    perform_evaluation(train_data, valid_data, test_data, model_dir, r_train, r_test,
                        target_fs, batch_size, k_smoothing=k_smoothing)
 
     LOGGER.info('Done!')

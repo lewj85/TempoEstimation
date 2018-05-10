@@ -128,7 +128,7 @@ def perform_tempo_evaluations(tempos_train, tempos_valid, tempos_test,
     return tempos, tempo_metrics
 
 
-def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
+def perform_evaluation(train_data, valid_data, test_data, model_dir, r_train, r_test,
                        target_fs, batch_size, k_smoothing=1):
     """
     Evaluate the beat tracking model on beat tracking and tempo estimation
@@ -168,9 +168,9 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
 
     # Using test data, estimate beats and evaluate
     LOGGER.info('Getting annotation beats.')
-    beat_times_train = get_beat_times_from_annotations(r, train_data['indices'])
-    beat_times_valid = get_beat_times_from_annotations(r, valid_data['indices'])
-    beat_times_test = get_beat_times_from_annotations(r, test_data['indices'])
+    beat_times_train = get_beat_times_from_annotations(r_train, train_data['indices'])
+    beat_times_valid = get_beat_times_from_annotations(r_train, valid_data['indices'])
+    beat_times_test = get_beat_times_from_annotations(r_test, test_data['indices'])
 
     # Using test data, estimate beats and evaluate
     LOGGER.info('Estimating beats.')
@@ -210,9 +210,9 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
 
     # Using test data, estimate tempo and evaluate
     LOGGER.info('Getting annotation tempo.')
-    tempos_train = get_tempos_from_annotations(r, train_data['indices'])
-    tempos_valid = get_tempos_from_annotations(r, valid_data['indices'])
-    tempos_test = get_tempos_from_annotations(r, test_data['indices'])
+    tempos_train = get_tempos_from_annotations(r_train, train_data['indices'])
+    tempos_valid = get_tempos_from_annotations(r_train, valid_data['indices'])
+    tempos_test = get_tempos_from_annotations(r_test, test_data['indices'])
 
     tempo_configs = [
         {},
@@ -230,9 +230,9 @@ def perform_evaluation(train_data, valid_data, test_data, model_dir, r,
             desc = 'tempo_prior_k={}_{}gaussian'
             desc = desc.format(conf['k'],
                                "" if conf['apply_gaussian'] else "no")
-            tempo_prior = get_tempo_prior(r, target_sr=target_fs,
-                hop_size=hop_length, min_lag=min_lag, max_lag=max_lag,
-                **conf)
+            tempo_prior = get_tempo_prior([r_train[idx] for idx in train_data['indices']],
+                target_sr=target_fs, hop_size=hop_length, min_lag=min_lag,
+                max_lag=max_lag, **conf)
         else:
             desc = 'base'
             tempo_prior = None

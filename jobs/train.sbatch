@@ -24,6 +24,5 @@ python $SRCDIR/train.py \
     --num-epochs 200 \
     --batch-size 10 \
     --lr 0.001 \
-    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/samples \
-    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/info hainsworth \
+    $SRCDIR/data_config.json \
     /scratch/jtc440/beat_tracker_output

@@ -1,8 +1,8 @@
 import numpy as np
 
-def create_data_subsets(X, y, valid_ratio=0.2, test_ratio=0.2):
+def create_data_subsets(X, y, valid_ratio=0.2):
     """
-    Split data into train, validation, and test subsets
+    Split data into train and validation subsets
     """
     # If we have a single input, wrap it in a list so we can generalize to
     # multiple inputs
@@ -14,13 +14,11 @@ def create_data_subsets(X, y, valid_ratio=0.2, test_ratio=0.2):
     # Get random order
     idx = np.random.permutation(n_examples)
 
-    num_train = int(n_examples*(1-valid_ratio-test_ratio))
-    num_valid = int(n_examples*valid_ratio)
-    num_test = n_examples - num_train - num_valid
+    num_train = int(n_examples*(1-valid_ratio))
+    num_valid = n_examples - num_train
 
     train_idx = idx[:num_train]
-    valid_idx = idx[num_train:num_train+num_valid]
-    test_idx = idx[num_train+num_valid:]
+    valid_idx = idx[num_train:]
 
     train_data = {
         'X': [x[train_idx] for x in X],
@@ -34,19 +32,12 @@ def create_data_subsets(X, y, valid_ratio=0.2, test_ratio=0.2):
         'indices': valid_idx
     }
 
-    test_data = {
-        'X': [x[test_idx] for x in X],
-        'y': y[test_idx],
-        'indices': test_idx
-    }
-
     # If we only have one input, remove the wrapper input list
     if len(X) == 1:
         train_data['X'] = train_data['X'][0]
         valid_data['X'] = valid_data['X'][0]
-        test_data['X'] = test_data['X'][0]
 
-    return train_data, valid_data, test_data
+    return train_data, valid_data
 
 
 def load_data(data_path, model_type):

@@ -3,6 +3,13 @@ import scipy.signal as signal
 from filter_utils import lfilter_center
 
 
+def get_interbeat_tempo_estimate(beat_times):
+    """
+    Get tempo estimate derived from the median interbeat interval
+    """
+    return 60 / np.median(np.diff(np.sort(beat_times)))
+
+
 def get_tempos_from_annotations(annotation_array, idxs):
     """
     Get a list of tempos from annotations

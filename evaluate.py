@@ -41,8 +41,7 @@ def main(model_dir):
     with open(config_path, 'r') as f:
         config = json.load(f)
 
-    data_dir = config['data_dir']
-    label_dir = config['label_dir']
+    data_config = config['data_config']
     dataset = config['dataset']
     output_dir = config['output_dir']
     num_epochs = config['num_epochs']
@@ -55,12 +54,34 @@ def main(model_dir):
     hop_length = int(target_fs * HOP_SIZE)
 
     LOGGER.info('Loading {} data.'.format(dataset))
-    if dataset == 'hainsworth':
-        a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
-                                    load_audio=False)
-    elif dataset == 'ballroom':
-        a, r = prep_ballroom_data(data_dir, label_dir, hop_length, target_fs,
-                                  load_audio=False)
+    sorted_train_datasets = sorted(data_config['train'].keys())
+    a_train = []
+    r_train = []
+    # Load audio and annotations
+    for dataset in sorted_train_datasets:
+        data_dir = data_config['train'][dataset]
+        if dataset == 'hainsworth':
+            a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
+                                        load_audio=not data_exists)
+        elif dataset == 'ballroom':
+            a, r = prep_ballroom_data(data_dir, label_dir, hop_length, target_fs,
+                                      load_audio=not data_exists)
+
+        a_train += a
+        r_train += r
+
+    a_test = []
+    r_test = []
+    for dataset, data_dir in data_config['test'].items():
+        if dataset == 'hainsworth':
+            a, r = prep_hainsworth_data(data_dir, label_dir, target_fs,
+                                        load_audio=not data_exists)
+        elif dataset == 'ballroom':
+            a, r = prep_ballroom_data(data_dir, label_dir, hop_length, target_fs,
+                                      load_audio=not data_exists)
+
+        a_test += a
+        r_test += r
 
     train_data_path = os.path.join(feature_data_dir, '{}_train_data.npz').format(dataset)
     valid_data_path = os.path.join(feature_data_dir, '{}_valid_data.npz').format(dataset)
@@ -73,7 +94,7 @@ def main(model_dir):
 
     # Evaluate model
     LOGGER.info('Evaluating model.')
-    perform_evaluation(train_data, valid_data, test_data, model_dir, r,
+    perform_evaluation(train_data, valid_data, test_data, model_dir, r_train, r_test,
                        target_fs, batch_size, k_smoothing=k_smoothing)
 
     LOGGER.info('Done!')
