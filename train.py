@@ -159,7 +159,7 @@ def main(data_config, output_dir, num_epochs=10, batch_size=5,
         test_data = {
             'X': X_test,
             'y': y_test,
-            'indices': np.arange(X_test.shape[0]) # Hack
+            'indices': np.arange(len(y_test)) # Hack
         }
 
         LOGGER.info('Creating data subsets.')
