@@ -11,9 +11,9 @@ def cnn(num_steps, win_size=1024, weight_decay=0.01):
     filters = 128
     kernel_size = 128
     net = TimeDistributed(Conv1D(filters, kernel_size, strides=2, kernel_initializer='he_normal',
-               kernel_regularizer=keras.regularizers.l2(weight_decay)), input_shape=input_shape)(a)
+               activation='relu', kernel_regularizer=keras.regularizers.l2(weight_decay),), input_shape=input_shape)(a)
     net = TimeDistributed(Conv1D(filters, kernel_size, strides=2, kernel_initializer='he_normal',
-               kernel_regularizer=keras.regularizers.l2(weight_decay)))(net)
+               activation='relu', kernel_regularizer=keras.regularizers.l2(weight_decay)))(net)
     """
     net = TimeDistributed(Conv1D(filters, kernel_size, strides=1, kernel_initializer='he_normal',
                kernel_regularizer=keras.regularizers.l2(weight_decay)))(net)
