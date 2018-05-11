@@ -36,6 +36,9 @@ HAINSWORTH_SUBBEAT_STRUCTURES = [
 ]
 
 def load_hainsworth_annotations(filename):
+    """
+    Load Hainsworth dataset annotations for a single file
+    """
     if not os.path.exists(filename):
         raise ValueError('{} does not exist'.format(filename))
 
@@ -69,12 +72,20 @@ def load_hainsworth_annotations(filename):
     }
     return annotations
 
+
 def resample_hainsworth_beats(annotations, source_sr, target_sr):
+    """
+    Convert the beat indices from one sample rate to another
+    """
     annotations['beat_times'] = annotations['beats'] / source_sr
     annotations['beats'] = ((target_sr/source_sr) * annotations['beats']).astype(int)
 
+
 # wrapper for hainsworth data
 def prep_hainsworth_data(data_dir, label_dir, target_sr=44100, load_audio=True):
+    """
+    Load Hainsworth dataset annotations and audio
+    """
     data_array = []
     label_array = []
 

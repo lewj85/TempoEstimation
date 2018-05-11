@@ -4,7 +4,7 @@ from scipy.signal import lfilter
 
 def lfilter_center(b, x, pad_mode='constant'):
     """
-    Filters
+    Applies centered (and thus non-causal) FIR filtering to the given signal
     """
     N = len(x)
     pad_length = len(b) // 2

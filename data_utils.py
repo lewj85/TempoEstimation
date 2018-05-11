@@ -41,6 +41,9 @@ def create_data_subsets(X, y, valid_ratio=0.2):
 
 
 def load_data(data_path, model_type):
+    """
+    Load model input data
+    """
     data = dict(np.load(data_path))
 
     if model_type == 'spectrogram':

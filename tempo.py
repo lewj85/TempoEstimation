@@ -33,6 +33,9 @@ def get_comb_filter_coeffs(alpha, lag):
 
 def estimate_tempo(beat_act, frame_rate, lag_min, lag_max, num_tempo_steps,
                    alpha, smooth_win_len, tempo_prior):
+    """
+    Estimate tempo using a filterbank of resonating comb filters and a weighted histogram
+    """
 
     # Smooth beat activation
     win = np.hamming(int(np.ceil(smooth_win_len*frame_rate)))
@@ -70,7 +73,7 @@ def estimate_tempo(beat_act, frame_rate, lag_min, lag_max, num_tempo_steps,
 def estimate_tempos_for_batch(y_pred, frame_rate, lag_min, lag_max,
     num_tempo_steps=100, alpha=0.79, smooth_win_len=.14, tempo_prior=None):
     """
-    Estimate tempo using a filterbank of resonating comb filters and a weighted histogram
+    Estimate tempos for a batch of outputs
     """
     tempos = []
     for track in y_pred:

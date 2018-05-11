@@ -7,6 +7,9 @@ from tempo import get_interbeat_tempo_estimate
 
 
 def load_ballroom_annotations(filename,sr):
+    """
+    Load Ballroom dataset annotations for a single file
+    """
 
     if not os.path.exists(filename):
         raise ValueError('{} does not exist'.format(filename))
@@ -23,11 +26,6 @@ def load_ballroom_annotations(filename,sr):
 
     annotations = {
         'filename': filename,
-#    'album_or_media': album_or_media,
-#    'album_title': album_title,
-#    'title': title,
-#    'style': style,
-#    'tempo': tempo,
         'tempo': get_interbeat_tempo_estimate(beat_times),
         'beats': beats,
         'beat_times': beat_times
@@ -35,11 +33,12 @@ def load_ballroom_annotations(filename,sr):
 
     return annotations
 
-#def resample_ballroom_beats(annotations, source_sr, target_sr):
-#    annotations['beats'] = ((target_sr/source_sr) * annotations['beats']).astype(int)
 
 # wrapper for ballroom data
 def prep_ballroom_data(data_dir, label_dir, target_sr=44100, load_audio=True):
+    """
+    Load Ballroom dataset annotations and audio
+    """
     data_array = []
     label_array = []
 

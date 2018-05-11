@@ -7,6 +7,9 @@ import numpy as np
 
 def train_model(train_data, valid_data, model_type, model_output_path, lr=0.001,
                 batch_size=5, num_epochs=10, patience=5, audio_window_size=2048):
+    """
+    Train neural network models
+    """
 
     X_train = train_data['X']
     y_train = train_data['y']

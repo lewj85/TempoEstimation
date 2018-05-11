@@ -18,6 +18,9 @@ HAINSWORTH_MAX_TEMPO = 250
 
 
 def create_metric_dict(values):
+    """
+    Create dictionary of summary statistics of a metric
+    """
     return {
         'mean': np.mean(values),
         'stdev': np.std(values),
