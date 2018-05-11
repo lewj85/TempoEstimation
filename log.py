@@ -1,15 +1,10 @@
+# Jason Cramer, Jesse Lew
 import logging
 
 
 def init_console_logger(logger, verbose=False):
     """
     Initializes logging to stdout
-    Args:
-        logger:  Logger object
-                 (Type: logging.Logger)
-    Kwargs:
-        verbose:  If true, prints verbose information to stdout. False by default.
-                  (Type: bool)
     """
     # Log to stderr also
     stream_handler = logging.StreamHandler()

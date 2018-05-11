@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 from scipy.signal import gaussian, filtfilt #, lfilter
 import numpy as np
 import matplotlib.pyplot as plt

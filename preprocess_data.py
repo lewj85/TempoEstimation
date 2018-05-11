@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import numpy as np
 from librosa.util import frame
 from keras.utils import to_categorical

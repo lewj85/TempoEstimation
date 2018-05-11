@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import os
 from keras.optimizers import Adam
 from keras.callbacks import CSVLogger, EarlyStopping, ModelCheckpoint

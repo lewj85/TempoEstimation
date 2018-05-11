@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import numpy as np
 from scipy.signal import lfilter
 

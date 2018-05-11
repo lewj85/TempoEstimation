@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import numpy as np
 
 def create_data_subsets(X, y, valid_ratio=0.2):

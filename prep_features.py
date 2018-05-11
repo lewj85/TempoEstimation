@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import librosa
 import numpy as np
 from scipy.signal import medfilt

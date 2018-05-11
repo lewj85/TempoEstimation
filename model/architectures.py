@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 from keras.models import Model
 from keras.layers import concatenate, Input
 from .bilstm import bilstm

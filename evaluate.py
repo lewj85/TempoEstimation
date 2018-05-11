@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import json
 import os
 import numpy as np
@@ -27,7 +28,6 @@ def parse_arguments():
     return vars(args)
 
 
-# CHANGE SAMPLE RATE TO 24kHz or 16kHz
 def main(model_dir):
     """
     Train a deep beat tracker model

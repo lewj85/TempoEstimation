@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import os
 import pickle
 import json
@@ -19,6 +20,9 @@ def parse_arguments():
 
 
 def create_summary_csv(output_data_dir, output_dir):
+    """
+    Create a summary CSV file out of a number of training runs
+    """
     fieldnames = ['dataset', 'num_epochs', 'batch_size', 'lr',
                   'patience', 'target_fs', 'audio_window_size',
                   'k_smoothing', 'model_type']

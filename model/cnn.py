@@ -1,3 +1,4 @@
+#Jason Cramer, Jesse Lew
 from keras.layers import Conv1D, Dense, Reshape, Input, TimeDistributed
 import keras.regularizers
 

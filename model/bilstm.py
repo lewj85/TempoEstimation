@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 from keras.layers import LSTM, Dense, TimeDistributed, concatenate, Input
 
 

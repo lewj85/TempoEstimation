@@ -1,3 +1,4 @@
+# Jason Cramer, Jesse Lew
 import numpy as np
 import scipy.signal as signal
 from filter_utils import lfilter_center
