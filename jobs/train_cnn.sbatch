@@ -1,5 +1,7 @@
 #!/bin/bash
-#
+
+# Jason Cramer, Jesse Lew
+
 #SBATCH --job-name=Tempo_GPU
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
@@ -26,6 +28,5 @@ python $SRCDIR/train.py \
     --model audio \
     --target-fs 16000 \
     --audio-window-size 512 \
-    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/samples \
-    /beegfs/jtc440/aca/Beat_Tracking/hainsworth/info hainsworth \
+    $SRCDIR/data_config.json \
     /scratch/jtc440/beat_tracker_output

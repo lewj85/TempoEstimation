@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Jason Cramer, Jesse Lew
+
 #SBATCH --job-name=Tempo_GPU
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
